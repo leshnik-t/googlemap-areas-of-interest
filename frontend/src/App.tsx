@@ -1,11 +1,16 @@
 import './App.scss';
 import { useRef, useEffect, useState } from 'react';
+import { nanoid } from 'nanoid';
+
+import { PolygonType } from './dataTypes/dataTypes';
+import { coordinateFuncsToCoordinates } from './utils/coordinateFuncsToCoordinates';
 
 import ToolsAOIControl from './components/toolAOIControl/ToolAOIControl';
 import ToolOnOffButton from './components/toolAOIOnOffButton/ToolAOIOnOffButton';
 import ToolAOIPopup from './components/toolAOIPopup/ToolAOIPopup';
 import { LiaDrawPolygonSolid } from "react-icons/lia";
 
+const POLYGON_NODES_MIN_QUANTITY = 3;
 
 function App() {
   const mapDOMElement = useRef<HTMLElement>(null);
@@ -15,7 +20,26 @@ function App() {
 
   const [isActiveToolContol, setIsActiveToolControl] = useState(false);
 
-  // tools Control handlers
+  // keeps drawn polygons
+  const [polygons, setPolygons] = useState<PolygonType[]>([]);
+
+  const renderGeometryElementsInMap = (
+    geometryElementsArray: PolygonType[],
+    mapReference: google.maps.Map
+  ) => {
+    if (geometryElementsArray.length === 0) return;
+
+    geometryElementsArray.map((geometryElement) => {
+      geometryElement.polygonInstance.setMap(mapReference);
+    })
+  }
+   
+
+  const resetDrawingToolsMode = () => {
+    drawingRef.current?.setDrawingMode(null);
+  };
+
+  // Tool AOI Control handlers
   const handleToolsPopupMode = () => {
     if (!mapRef.current) return;
     if (!drawingRef.current) return;
@@ -41,7 +65,7 @@ function App() {
     console.log("click explore");
     drawingRef.current.setDrawingMode(null);
   }
-  // end tools Menu handlers
+  // end Tool AOI Control handlers
   
   useEffect(() => {
       const initMap = async (): Promise<void> => {
@@ -108,6 +132,60 @@ function App() {
             });
             drawingRef.current = drawingManagerObject;
             drawingManagerObject.setMap(googleMapObject);
+
+            // On draw of the shape completes
+            google.maps.event.addListener(drawingManagerObject, 'overlaycomplete', function(event: google.maps.drawing.OverlayCompleteEvent) {
+              const { type, overlay } = event;
+
+              if (overlay) {
+                window.google.maps.event.clearInstanceListeners(overlay);
+                overlay.setMap(null);
+                // resetDrawingButtons?.();
+
+                if (type === google.maps.drawing.OverlayType.POLYGON) {
+                  const typedOverlay = overlay as google.maps.Polygon;
+                  const coordinateFuncs: google.maps.LatLng[] = typedOverlay
+                    .getPath()
+                    .getArray();
+
+                  const coordinates =
+                    coordinateFuncsToCoordinates(coordinateFuncs);
+
+                  if (coordinates.length < POLYGON_NODES_MIN_QUANTITY) {
+                    return;
+                  }
+
+                  const polygonItem = new google.maps.Polygon({
+                    paths: coordinates,
+                    strokeColor: "#FF0000",
+                    strokeOpacity: 0.8,
+                    strokeWeight: 2,
+                    fillColor: "#FF0000",
+                    fillOpacity: 0.35,
+                  });
+            
+                  google.maps.event.addListener(polygonItem, 'click', function() {
+                    console.log("you clicked me", polygonItem);
+                    polygonItem.setOptions({
+                      fillColor : '#0000ff',
+                    });
+                  });
+
+                  setPolygons((prevPolygons) => [
+                    ...prevPolygons,
+                    {
+                      id: nanoid(),
+                      coordinates,
+                      polygonInstance: polygonItem,
+                    },
+                  ]);
+
+                  resetDrawingToolsMode();
+                }
+              }
+            }); // end On draw of the shape completes
+
+
           } 
         } catch(e) {
           console.log(e);
@@ -116,6 +194,12 @@ function App() {
       initMap();
       
   }, []);
+
+  useEffect(() => {
+    if (mapRef.current) {
+      renderGeometryElementsInMap(polygons, mapRef.current);
+    }
+  }, [polygons])
 
   return (
     <>
