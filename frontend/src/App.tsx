@@ -1,43 +1,91 @@
 import './App.scss';
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { nanoid } from 'nanoid';
 
-import { PolygonType } from './dataTypes/dataTypes';
-import { coordinateFuncsToCoordinates } from './utils/coordinateFuncsToCoordinates';
+import { DataType, GeometryElementType } from './dataTypes/dataTypes';
+import { 
+  svgMarker, 
+  DRAW_MODE_COLOR,
+} from './helpers/constants';
+import { prepareDataItem } from './helpers/prepareDataItem';
+import { resetDrawingToolsMode } from './helpers/resetDrawingToolsMode';
+import { renderGeometryElementsInMap } from './helpers/renderGeometryElementsInMap';
+import { geometryElmentSetOptions } from './helpers/geometryElementSetOptions';
+import { findSelectedDataItemId } from './helpers/findSelectedDataItemId';
+
 
 import ToolsAOIControl from './components/toolAOIControl/ToolAOIControl';
 import ToolOnOffButton from './components/toolAOIOnOffButton/ToolAOIOnOffButton';
 import ToolAOIPopup from './components/toolAOIPopup/ToolAOIPopup';
 import { LiaDrawPolygonSolid } from "react-icons/lia";
 
-const POLYGON_NODES_MIN_QUANTITY = 3;
-
 function App() {
   const mapDOMElement = useRef<HTMLElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const drawingRef = useRef<google.maps.drawing.DrawingManager | null>(null);
   const toolsAOIMenuElement = useRef<HTMLDivElement>(null);
+  const mapGeometryElement = useRef<GeometryElementType | null>(null);
+
+  const [isLoadedMapDrawingManager, setIsLoadedMapDrawingManager] = useState<boolean>(false);
+  const [isLoadedGeometryElement, setIsLoadedGeometryElement] = useState<boolean>(false);
 
   const [isActiveToolContol, setIsActiveToolControl] = useState(false);
 
-  // keeps drawn polygons
-  const [polygons, setPolygons] = useState<PolygonType[]>([]);
+  const [data, setData] = useState<DataType[]>([]);
+  const [selectedDataItemId, setSelectedDataItemId] = useState<string | null>(null);
 
-  const renderGeometryElementsInMap = (
-    geometryElementsArray: PolygonType[],
-    mapReference: google.maps.Map
+
+  // drawing Manager functions
+  const createDrawingManagerOverlayCompleteListener = useCallback(
+    (
+      drawingManagerReference: google.maps.drawing.DrawingManager
+    ) => {
+      google.maps.event.addListener(drawingManagerReference, 'overlaycomplete', function(event: google.maps.drawing.OverlayCompleteEvent) {
+        const { overlay } = event;
+
+        if (overlay) {
+          window.google.maps.event.clearInstanceListeners(overlay);
+          overlay.setMap(null);
+          // resetDrawingButtons?.();
+
+          const preparedItem = prepareDataItem(event);
+
+          if (preparedItem) {
+            const {geometryElement, coordinates} = preparedItem;
+            mapGeometryElement.current = geometryElement;
+            setIsLoadedGeometryElement(true);
+            
+            setData((prev) => [
+              ...prev,
+              {
+                id: nanoid(),
+                coordinates,
+                instance: geometryElement,
+              },
+            ]);
+
+          }
+        }
+
+        resetDrawingToolsMode(drawingManagerReference);
+      });
+    }, 
+    []
+  );
+
+  // helper functions
+  const resetSelection = (
+    data: DataType[],
   ) => {
-    if (geometryElementsArray.length === 0) return;
+    console.log("reset selection color");
 
-    geometryElementsArray.map((geometryElement) => {
-      geometryElement.polygonInstance.setMap(mapReference);
-    })
+    data.forEach((dataItem) => {
+      geometryElmentSetOptions(dataItem.instance, 'draw');
+    });
+
+    // renderGeometryElementsInMap(mapReference);
   }
-   
-
-  const resetDrawingToolsMode = () => {
-    drawingRef.current?.setDrawingMode(null);
-  };
+  
 
   // Tool AOI Control handlers
   const handleToolsPopupMode = () => {
@@ -100,17 +148,6 @@ function App() {
               googleMapObject.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toolsAOIMenuElement.current);
             }
            
-            /// Drawing Manager
-            const svgMarker = {
-              path: "M64 32C64 14.3 49.7 0 32 0S0 14.3 0 32V64 368 480c0 17.7 14.3 32 32 32s32-14.3 32-32V352l64.3-16.1c41.1-10.3 84.6-5.5 122.5 13.4c44.2 22.1 95.5 24.8 141.7 7.4l34.7-13c12.5-4.7 20.8-16.6 20.8-30V66.1c0-23-24.2-38-44.8-27.7l-9.6 4.8c-46.3 23.2-100.8 23.2-147.1 0c-35.1-17.6-75.4-22-113.5-12.5L64 48V32z",
-              fillColor: "blue",
-              fillOpacity: 0.6,
-              strokeWeight: 0,
-              rotation: 0,
-              scale: 0.05,
-              anchor: new google.maps.Point(0, 20),
-            };
-
             const drawingManagerObject = new DrawingManager({
               drawingMode: null,
               drawingControl: false,
@@ -119,73 +156,26 @@ function App() {
                 drawingModes: [
                   google.maps.drawing.OverlayType.MARKER,
                   google.maps.drawing.OverlayType.CIRCLE,
-                  google.maps.drawing.OverlayType.POLYGON,
-                  google.maps.drawing.OverlayType.POLYLINE,
-                  google.maps.drawing.OverlayType.RECTANGLE,
+                  // google.maps.drawing.OverlayType.POLYGON,
+                  // google.maps.drawing.OverlayType.POLYLINE,
+                  // google.maps.drawing.OverlayType.RECTANGLE,
                 ],
               },
               markerOptions: {
-                icon: svgMarker,
+                icon: {
+                  ...svgMarker,
+                  // anchor: new google.maps.Point(0, 0)
+                }
               },
               polygonOptions: {
+                strokeColor: DRAW_MODE_COLOR,
+                fillColor: DRAW_MODE_COLOR
               },
             });
+
             drawingRef.current = drawingManagerObject;
             drawingManagerObject.setMap(googleMapObject);
-
-            // On draw of the shape completes
-            google.maps.event.addListener(drawingManagerObject, 'overlaycomplete', function(event: google.maps.drawing.OverlayCompleteEvent) {
-              const { type, overlay } = event;
-
-              if (overlay) {
-                window.google.maps.event.clearInstanceListeners(overlay);
-                overlay.setMap(null);
-                // resetDrawingButtons?.();
-
-                if (type === google.maps.drawing.OverlayType.POLYGON) {
-                  const typedOverlay = overlay as google.maps.Polygon;
-                  const coordinateFuncs: google.maps.LatLng[] = typedOverlay
-                    .getPath()
-                    .getArray();
-
-                  const coordinates =
-                    coordinateFuncsToCoordinates(coordinateFuncs);
-
-                  if (coordinates.length < POLYGON_NODES_MIN_QUANTITY) {
-                    return;
-                  }
-
-                  const polygonItem = new google.maps.Polygon({
-                    paths: coordinates,
-                    strokeColor: "#FF0000",
-                    strokeOpacity: 0.8,
-                    strokeWeight: 2,
-                    fillColor: "#FF0000",
-                    fillOpacity: 0.35,
-                  });
-            
-                  google.maps.event.addListener(polygonItem, 'click', function() {
-                    console.log("you clicked me", polygonItem);
-                    polygonItem.setOptions({
-                      fillColor : '#0000ff',
-                    });
-                  });
-
-                  setPolygons((prevPolygons) => [
-                    ...prevPolygons,
-                    {
-                      id: nanoid(),
-                      coordinates,
-                      polygonInstance: polygonItem,
-                    },
-                  ]);
-
-                  resetDrawingToolsMode();
-                }
-              }
-            }); // end On draw of the shape completes
-
-
+            setIsLoadedMapDrawingManager(true);
           } 
         } catch(e) {
           console.log(e);
@@ -195,14 +185,60 @@ function App() {
       
   }, []);
 
+
   useEffect(() => {
     if (mapRef.current) {
-      renderGeometryElementsInMap(polygons, mapRef.current);
+      renderGeometryElementsInMap(data, mapRef.current);
     }
-  }, [polygons])
+  }, [data]);
+
+  useEffect(() => {
+    const onLoadCompleteDrawingManager = (
+        drawingManagerReference: google.maps.drawing.DrawingManager
+      ) => {
+        if (!isLoadedMapDrawingManager) return;
+         
+        createDrawingManagerOverlayCompleteListener(drawingManagerReference);
+    }
+
+    if (drawingRef.current) {
+      onLoadCompleteDrawingManager(drawingRef.current);
+    }
+  }, [isLoadedMapDrawingManager, createDrawingManagerOverlayCompleteListener]);
+
+  useEffect(() => {
+    // geometry element function
+    const onLoadGeometryElementInMap = (
+      geometryElement: GeometryElementType
+    ) => {
+      if(!isLoadedGeometryElement) return;
+      
+      google.maps.event.addListener(geometryElement, 'click', function() {
+        console.log("you clicked me", geometryElement);
+        // TODO: resetSelection
+        resetSelection(data);
+
+        if (data) {
+          setSelectedDataItemId(findSelectedDataItemId(data, geometryElement));
+
+          geometryElmentSetOptions(geometryElement, 'select');
+        }
+      });
+
+      setIsLoadedGeometryElement(false);
+      mapGeometryElement.current = null;
+    }
+
+    if (mapGeometryElement.current) {
+      onLoadGeometryElementInMap(mapGeometryElement.current);
+    }
+  }, [isLoadedGeometryElement, data]);
+
+
 
   return (
     <>
+      <button onClick={() => console.log("Data", data)}>show data state</button>
       <ToolsAOIControl
         ref={toolsAOIMenuElement}>
          <ToolOnOffButton
