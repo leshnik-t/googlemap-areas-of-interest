@@ -1,10 +1,47 @@
 import './App.scss';
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useState } from 'react';
+
+import ToolsAOIControl from './components/toolAOIControl/ToolAOIControl';
+import ToolOnOffButton from './components/toolAOIOnOffButton/ToolAOIOnOffButton';
+import ToolAOIPopup from './components/toolAOIPopup/ToolAOIPopup';
+import { LiaDrawPolygonSolid } from "react-icons/lia";
+
 
 function App() {
   const mapDOMElement = useRef<HTMLElement>(null);
   const mapRef = useRef<google.maps.Map | null>(null);
   const drawingRef = useRef<google.maps.drawing.DrawingManager | null>(null);
+  const toolsAOIMenuElement = useRef<HTMLDivElement>(null);
+
+  const [isActiveToolContol, setIsActiveToolControl] = useState(false);
+
+  // tools Control handlers
+  const handleToolsPopupMode = () => {
+    if (!mapRef.current) return;
+    if (!drawingRef.current) return;
+    setIsActiveToolControl(prev => !prev);
+
+    // drawingRef.setOptions({drawingControl: isActive});
+  }
+  const handleAddPolygon = () => {
+    if (!mapRef.current) return;
+    if (!drawingRef.current) return;
+    console.log("add polygon");
+    drawingRef.current.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+  }
+  const handleAddMarker = () => {
+    if (!mapRef.current) return;
+    if (!drawingRef.current) return;
+    console.log("add marker");
+    drawingRef.current.setDrawingMode(google.maps.drawing.OverlayType.MARKER);
+  }
+  const handleExploreMap = () => {
+    if (!mapRef.current) return;
+    if (!drawingRef.current) return;
+    console.log("click explore");
+    drawingRef.current.setDrawingMode(null);
+  }
+  // end tools Menu handlers
   
   useEffect(() => {
       const initMap = async (): Promise<void> => {
@@ -33,6 +70,11 @@ function App() {
               }
             );
             mapRef.current = googleMapObject;
+
+            // Tools Control for Google Map
+            if (toolsAOIMenuElement.current) {
+              googleMapObject.controls[google.maps.ControlPosition.RIGHT_BOTTOM].push(toolsAOIMenuElement.current);
+            }
            
             /// Drawing Manager
             const svgMarker = {
@@ -47,7 +89,7 @@ function App() {
 
             const drawingManagerObject = new DrawingManager({
               drawingMode: null,
-              drawingControl: true,
+              drawingControl: false,
               drawingControlOptions: {
                 position: google.maps.ControlPosition.RIGHT_BOTTOM,
                 drawingModes: [
@@ -65,6 +107,7 @@ function App() {
               },
             });
             drawingRef.current = drawingManagerObject;
+            drawingManagerObject.setMap(googleMapObject);
           } 
         } catch(e) {
           console.log(e);
@@ -76,6 +119,22 @@ function App() {
 
   return (
     <>
+      <ToolsAOIControl
+        ref={toolsAOIMenuElement}>
+         <ToolOnOffButton
+            isActive={isActiveToolContol}
+            areaLabel="Switch On Of AOI tool buttons"
+            handleToolsPopupMode={handleToolsPopupMode}
+          >
+            <LiaDrawPolygonSolid />
+          </ToolOnOffButton>
+          <ToolAOIPopup 
+            isActive={isActiveToolContol} 
+            handleAddMarker={handleAddMarker}
+            handleAddPolygon={handleAddPolygon}
+            handleExploreMap={handleExploreMap}
+          />
+      </ToolsAOIControl>
       <section id="map" ref={mapDOMElement}>
           
       </section>
