@@ -1,0 +1,201 @@
+// Reboot
+
+// Document
+//
+// Change from `box-sizing: content-box` so that `width` is not affected by `padding` or `border`.
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+// Root
+//
+// Ability to the value of the root font sizes, affecting the value of `rem`.
+// null by default, thus nothing is generated.
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  font-size:16px;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color: #ffffff;
+  background-color: #333333;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  flex-direction: row;
+  justify-items: center;
+  min-width: 320px;
+  min-height: 100dvh;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: #000000;
+}
+
+body > * {
+  flex: 1;
+}
+
+h1, h2, h3, h4 {
+  margin: 0;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: 0.625rem;
+}
+
+ol,
+ul {
+  padding-left: 2rem;
+}
+
+ol,
+ul,
+dl {
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+ol ol,
+ul ul,
+ol ul,
+ul ol {
+  margin-bottom: 0;
+}
+
+a {
+  font-size: inherit;
+}
+
+figure {
+  margin: 0 0 1rem;
+}
+
+img,
+svg {
+  vertical-align: middle;
+}
+
+label {
+  display: inline-block;
+}
+
+button:focus:not(:focus-visible) {
+  outline: 0;
+}
+
+input,
+button,
+select,
+optgroup,
+textarea {
+  margin: 0; // 1
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+button,
+select {
+  text-transform: none;
+}
+
+select {
+  word-wrap: normal;
+
+  &:disabled {
+    opacity: 1;
+  }
+}
+// Remove the dropdown arrow only from text type inputs built with datalists in Chrome.
+[list]:not([type="date"]):not([type="datetime-local"]):not([type="month"]):not([type="week"]):not([type="time"])::-webkit-calendar-picker-indicator {
+  display: none !important;
+}
+button,
+[type="button"], 
+[type="reset"],
+[type="submit"] {
+  -webkit-appearance: button;
+}
+
+// Remove inner border and padding from Firefox, but don't restore the outline like Normalize.
+
+::-moz-focus-inner {
+  padding: 0;
+  border-style: none;
+}
+
+//Textareas should really only resize vertically so they don't break their (horizontal) containers.
+
+textarea {
+  resize: vertical; // 1
+}
+
+// Fix height of inputs with a type of datetime-local, date, month, week, or time
+::-webkit-datetime-edit-fields-wrapper,
+::-webkit-datetime-edit-text,
+::-webkit-datetime-edit-minute,
+::-webkit-datetime-edit-hour-field,
+::-webkit-datetime-edit-day-field,
+::-webkit-datetime-edit-month-field,
+::-webkit-datetime-edit-year-field {
+  padding: 0;
+}
+
+::-webkit-inner-spin-button {
+  height: auto;
+}
+
+[type="search"] {
+  -webkit-appearance: textfield;
+  outline-offset: -2px;
+}
+[type="tel"],
+[type="url"],
+[type="email"],
+[type="number"] {
+  direction: ltr;
+}
+
+// Remove the inner padding in Chrome and Safari on macOS.
+
+::-webkit-search-decoration {
+  -webkit-appearance: none;
+}
+
+// Remove padding around color pickers in webkit browsers
+
+::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+// 1. Inherit font family and line height for file input buttons
+// 2. Correct the inability to style clickable types in iOS and Safari.
+
+::file-selector-button {
+  font: inherit; // 1
+  -webkit-appearance: button; // 2
+}
+
+// Correct element displays
+
+output {
+  display: inline-block;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+

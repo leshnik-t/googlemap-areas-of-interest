@@ -1,0 +1,124 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+#map {
+  height: 100%;
+}
+
+h1 {
+  font-size: 1.75rem;
+  margin-bottom: 1rem;
+}
+
+h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+h3 {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+a {
+  &:link, &:visited {
+    color: #646cff;
+    text-decoration: underline;
+  }
+
+  &:hover, &:active {
+    color: #646cff;
+    text-decoration: none;
+  }
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  color: black;
+  background-color: white;
+  cursor: pointer;
+  transition: border-color 0.25s;
+
+  &:hover {
+    border-color: #646cff;
+  }
+
+  &:focus, &:focus-visible {
+    outline: 4px auto -webkit-focus-ring-color;
+  }
+}
+//////////////////
+.map-container {
+  background-color: green;
+}
+
+aside{
+  background-color: yellow;
+  position: fixed;
+  right: 50px;
+  bottom: 50px;
+  width: 100px;
+  height: 50px;
+}
+
+//////////////////////////////
+.App {
+  display: flex;
+  flex-direction: column;
+  // min-width: 100%;
+  // min-height: 100dvh;
+}
+.App {
+  height: 100vh;
+  width: 100vw;
+}
+
+.map-container {
+  height: 100%;
+  width: 100%;
+}
+.App > main {
+  flex: 1 ;
+  display: flex;
+}
+
+.tools-button {
+  background-color: black;
+  color: white;
+  font-size: 1rem;
+  z-index: 12;
+}
+.tools-menu{
+  position: relative;
+}
+.tools-popup.active {
+  display: block;
+  position: absolute;
+  right: 0px;
+  bottom: 50px;
+  z-index: 1000;
+}
+.tools-popup {
+  display: none;
+}
+.tools-popup > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media screen and (min-width: 768px) {
+  .tools-popup > div {
+    flex-direction: row;
+  }
+}
+
+
