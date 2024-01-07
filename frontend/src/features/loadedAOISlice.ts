@@ -11,11 +11,13 @@ export type SingleAOIType = {
 export type MultipleAOIType = SingleAOIType[];
 
 export type AOIStateType = {
-    id?: string,
-    name?: string,
+    id: string,
+    name: string,
     aoiData: MultipleAOIType
 
 }
+
+export type PayloadActionAOIType = Omit<AOIStateType, 'id'>
 
 const initialState: AOIStateType[] = [];
 
@@ -25,12 +27,12 @@ const loadedAOISlice = createSlice({
     reducers: {
         addAOIItem: (
             state, 
-            action: PayloadAction<MultipleAOIType>
+            action: PayloadAction<PayloadActionAOIType>
         ) => {
             const newAOI = {
                 id: nanoid(),
-                name: 'first aoi',
-                aoiData: action.payload,
+                name: action.payload.name,
+                aoiData: action.payload.aoiData,
             }
             state.push(newAOI);
         },

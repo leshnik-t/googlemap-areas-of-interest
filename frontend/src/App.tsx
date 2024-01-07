@@ -3,7 +3,6 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from './app/hooks';
 import { 
   SingleAOIType,
-  MultipleAOIType,
   selectLoadedAOI, 
   addAOIItem 
 }  from './features/loadedAOISlice';
@@ -30,6 +29,7 @@ import ToolsAOIControl from './components/toolAOIControl/ToolAOIControl';
 import ToolOnOffButton from './components/toolAOIOnOffButton/ToolAOIOnOffButton';
 import ToolAOIPopup from './components/toolAOIPopup/ToolAOIPopup';
 import { LiaDrawPolygonSolid } from "react-icons/lia";
+import SavePopup from './components/SavePopup/SavePopup.tsx';
 
 function App() {
   const mapDOMElement = useRef<HTMLElement>(null);
@@ -49,6 +49,55 @@ function App() {
 
   const loadedAOI = useAppSelector(selectLoadedAOI);
   const dispatch = useAppDispatch();
+
+  /// save popup
+  const [isSavePopupShown, setIsSavePopupShown] = useState<boolean>(false);
+  const [nameAOI, setNameAOI] = useState<string>('');
+
+  const handleChangeNameValue = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setNameAOI(event.target.value);
+  }
+
+  const handleSaveAOI = () => {
+    // prepare data for AOI dispatch
+    const currentAOI = data.map((dataItem) => {
+      let currentInstanceType;
+      switch(true) {
+        case (dataItem.instance instanceof google.maps.Polygon): {
+          currentInstanceType = 'polygon';
+          break;
+        }
+        case (dataItem.instance instanceof google.maps.Marker): {
+          currentInstanceType = 'marker';
+          break;
+        }
+        default: break;
+      }
+
+      return ({
+        id: dataItem.id, 
+        coordinates: dataItem.coordinates,
+        type: currentInstanceType
+      } as  SingleAOIType)
+    });
+    console.log("currentAOI", currentAOI);
+    // ask for a name from popup
+    dispatch(addAOIItem({
+      name: nameAOI,
+      aoiData: currentAOI
+    }));
+    
+    setIsSavePopupShown(false);
+    setNameAOI('');
+    
+    // load new dispatched element in data
+    // on load change color of the saved Geometry elements to white
+  }
+  const handleCancelSaveAOI = () => {
+    setIsSavePopupShown(false);
+  }
 
   const clearSelection = useCallback(
     (
@@ -168,40 +217,11 @@ function App() {
     mapGeometryElement.current = null;
     setSelectedDataItemId(null);
   }
-  const handleSaveAOI = () => {
+  const handleSaveShowPopup = () => {
     if (!mapRef.current) return;
     if (!drawingRef.current) return;
     if (data.length === 0) return;
-    console.log("Saved");
-
-    // prepare data for AOI dispatch
-    const currentAOI = data.map((dataItem) => {
-      let currentInstanceType;
-      switch(true) {
-        case (dataItem.instance instanceof google.maps.Polygon): {
-          currentInstanceType = 'polygon';
-          break;
-        }
-        case (dataItem.instance instanceof google.maps.Marker): {
-          currentInstanceType = 'marker';
-          break;
-        }
-        default: break;
-      }
-
-      return ({
-        id: dataItem.id, 
-        coordinates: dataItem.coordinates,
-        type: currentInstanceType
-      } as  SingleAOIType)
-    });
-    console.log("currentAOI", currentAOI);
-    // ask for a name from popup
-    dispatch(addAOIItem(currentAOI));
-    
-    // load new dispatched element in data
-    // on load change color of the saved Geometry elements to white
-
+    setIsSavePopupShown(true);
   };
   // end Tool AOI Control handlers
 
@@ -316,6 +336,13 @@ function App() {
 
   return (
     <>
+      <SavePopup 
+        isSavePopupShown={isSavePopupShown}
+        nameValue={nameAOI}
+        handleChangeNameValue={handleChangeNameValue}
+        handleCancel={handleCancelSaveAOI}
+        handleSave={handleSaveAOI}
+      />
       <button onClick={() => console.log("store state", loadedAOI)}>show store state</button>
       <button onClick={() => clearSelection(data)}>Clear selection</button>
       <ToolsAOIControl
@@ -333,7 +360,7 @@ function App() {
             handleAddPolygon={handleAddPolygon}
             handleExploreMap={handleExploreMap}
             handleDeleteSelectedItem={handleDeleteSelectedItem}
-            handleSaveAOI = {handleSaveAOI}
+            handleSaveAOI = {handleSaveShowPopup}
           />
       </ToolsAOIControl>
       <section id="map" ref={mapDOMElement}>
