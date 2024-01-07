@@ -10,6 +10,8 @@ type ToolAOIPopupProps = {
     handleAddMarker: () => void 
     handleAddPolygon: () => void,
     handleExploreMap: () => void,
+    handleDeleteSelectedItem: () => void,
+    handleSaveAOI: () => void
 }
 
 const ToolAOIPopup = ({ 
@@ -17,6 +19,8 @@ const ToolAOIPopup = ({
     handleAddMarker,
     handleAddPolygon,
     handleExploreMap,
+    handleDeleteSelectedItem,
+    handleSaveAOI
 
 } : ToolAOIPopupProps) => {
     const divCSSClassName = isActive ? 'active tools-popup' : 'tools-popup'
@@ -64,6 +68,7 @@ const ToolAOIPopup = ({
               type="button"
               role="menuitemradio"
               aria-checked="false"
+              onClick={handleDeleteSelectedItem}
             >
               <RiDeleteBinLine />
             </button>
@@ -74,6 +79,7 @@ const ToolAOIPopup = ({
               type="button"
               role="menuitemradio"
               aria-checked="false"
+              onClick={handleSaveAOI}
             >
               <AiOutlineSave />
             </button>

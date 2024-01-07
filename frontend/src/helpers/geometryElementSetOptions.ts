@@ -9,7 +9,7 @@ import { GeometryElementType } from '../dataTypes/dataTypes';
 
 type ModeType = 'explore' | 'draw' | 'select';
 
-export const geometryElmentSetOptions = (
+export const geometryElementSetOptions = (
     geometryElement: GeometryElementType,
     mode: ModeType
 ) => {

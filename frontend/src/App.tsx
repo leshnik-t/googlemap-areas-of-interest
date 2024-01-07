@@ -1,5 +1,7 @@
 import './App.scss';
 import { useRef, useEffect, useState, useCallback } from 'react';
+import { useAppSelector, useAppDispatch } from './app/hooks';
+
 import { nanoid } from 'nanoid';
 
 import { DataType, GeometryElementType } from './dataTypes/dataTypes';
@@ -7,12 +9,13 @@ import {
   svgMarker, 
   DRAW_MODE_COLOR,
 } from './helpers/constants';
-import { prepareDataItem } from './helpers/prepareDataItem';
-import { resetDrawingToolsMode } from './helpers/resetDrawingToolsMode';
-import { renderGeometryElementsInMap } from './helpers/renderGeometryElementsInMap';
-import { geometryElmentSetOptions } from './helpers/geometryElementSetOptions';
-import { findSelectedDataItemId } from './helpers/findSelectedDataItemId';
 
+import { resetDrawingToolsMode } from './helpers/resetDrawingToolsMode';
+import { prepareDataItem } from './helpers/prepareDataItem';
+import { renderGeometryElementsInMap } from './helpers/renderGeometryElementsInMap';
+import { findSelectedDataItemId } from './helpers/findSelectedDataItemId';
+import { geometryElementSetOptions } from './helpers/geometryElementSetOptions';
+import { deleteGeometryElementFromMap } from './helpers/deleteGeometryElementFromMap';
 
 import ToolsAOIControl from './components/toolAOIControl/ToolAOIControl';
 import ToolOnOffButton from './components/toolAOIOnOffButton/ToolAOIOnOffButton';
@@ -24,7 +27,6 @@ function App() {
   const mapRef = useRef<google.maps.Map | null>(null);
   const drawingRef = useRef<google.maps.drawing.DrawingManager | null>(null);
   const toolsAOIMenuElement = useRef<HTMLDivElement>(null);
-  const mapGeometryElement = useRef<GeometryElementType | null>(null);
 
   const [isLoadedMapDrawingManager, setIsLoadedMapDrawingManager] = useState<boolean>(false);
   const [isLoadedGeometryElement, setIsLoadedGeometryElement] = useState<boolean>(false);
@@ -33,9 +35,50 @@ function App() {
 
   const [data, setData] = useState<DataType[]>([]);
   const [selectedDataItemId, setSelectedDataItemId] = useState<string | null>(null);
+  const [isClickedGeometryElement, setIsClickedGeometryElement] = useState<boolean>(false);
+  const mapGeometryElement = useRef<GeometryElementType | null>(null);
 
+  // const loadedAOI = useAppSelector(selectLoadedAOI);
+  // const dispatch = useAppDispatch();
 
-  // drawing Manager functions
+  const clearSelection = useCallback(
+    (
+      data: DataType[],
+    ) => {
+      const [...copyOfData] = [...data];
+      copyOfData.map((dataItem) => {
+        geometryElementSetOptions(dataItem.instance, 'draw');
+      });
+      
+      setData(copyOfData);
+   },
+   []
+  );
+
+  useEffect(() => {
+    if (isClickedGeometryElement) {
+      clearSelection(data);
+
+      if (mapGeometryElement.current) {
+        const selectedItemId = findSelectedDataItemId(data, mapGeometryElement.current);
+        setSelectedDataItemId(selectedItemId);
+
+        // setting data
+        const [...copyOfData] = [...data]
+        copyOfData.map((dataItem) => {
+          if (dataItem.id === selectedItemId) {
+            geometryElementSetOptions(dataItem.instance, 'select');
+          }
+        })
+
+        setData(copyOfData);
+        mapGeometryElement.current = null;
+      }
+    }
+    setIsClickedGeometryElement(false);
+  }, [isClickedGeometryElement, data, clearSelection]);
+
+  // Drawing Manager functions
   const createDrawingManagerOverlayCompleteListener = useCallback(
     (
       drawingManagerReference: google.maps.drawing.DrawingManager
@@ -52,9 +95,7 @@ function App() {
 
           if (preparedItem) {
             const {geometryElement, coordinates} = preparedItem;
-            mapGeometryElement.current = geometryElement;
-            setIsLoadedGeometryElement(true);
-            
+
             setData((prev) => [
               ...prev,
               {
@@ -64,6 +105,8 @@ function App() {
               },
             ]);
 
+            mapGeometryElement.current = geometryElement;
+            setIsLoadedGeometryElement(true);
           }
         }
 
@@ -73,27 +116,11 @@ function App() {
     []
   );
 
-  // helper functions
-  const resetSelection = (
-    data: DataType[],
-  ) => {
-    console.log("reset selection color");
-
-    data.forEach((dataItem) => {
-      geometryElmentSetOptions(dataItem.instance, 'draw');
-    });
-
-    // renderGeometryElementsInMap(mapReference);
-  }
-  
-
   // Tool AOI Control handlers
   const handleToolsPopupMode = () => {
     if (!mapRef.current) return;
     if (!drawingRef.current) return;
     setIsActiveToolControl(prev => !prev);
-
-    // drawingRef.setOptions({drawingControl: isActive});
   }
   const handleAddPolygon = () => {
     if (!mapRef.current) return;
@@ -113,8 +140,61 @@ function App() {
     console.log("click explore");
     drawingRef.current.setDrawingMode(null);
   }
+  const handleDeleteSelectedItem = () => {
+    if (!mapRef.current) return;
+    if (!drawingRef.current) return;
+    if (!selectedDataItemId) return;
+    console.log("click delete");
+    // id
+    console.log("item id", selectedDataItemId);
+
+    deleteGeometryElementFromMap(selectedDataItemId, data);
+
+    // update data state
+
+    const newData = data.filter((dataItem) => dataItem.id !== selectedDataItemId);
+    console.log('New Data', newData);
+    setData(newData);
+
+    mapGeometryElement.current = null;
+    setSelectedDataItemId(null);
+  }
+  const handleSaveAOI = () => {
+    if (!mapRef.current) return;
+    if (!drawingRef.current) return;
+    if (data.length === 0) return;
+    console.log("Saved");
+
+    // prepare data for AOI dispatch
+    const currentAOI = data.map((dataItem) => {
+      let currentInstanceType;
+      switch(true) {
+        case (dataItem.instance instanceof google.maps.Polygon): {
+          currentInstanceType = 'polygon';
+          break;
+        }
+        case (dataItem.instance instanceof google.maps.Marker): {
+          currentInstanceType = 'marker';
+          break;
+        }
+        default: break;
+      }
+
+      return ({
+        id: dataItem.id, 
+        coordinates: dataItem.coordinates,
+        type: currentInstanceType
+      })
+    });
+    // ask for a name from popup
+    // dispatch(addAOI);
+    
+    // load new dispatched element in data
+    // on load change color of the saved Geometry elements to white
+
+  };
   // end Tool AOI Control handlers
-  
+
   useEffect(() => {
       const initMap = async (): Promise<void> => {
       // The location of Uluru
@@ -123,7 +203,6 @@ function App() {
         try {
           const { Map } = await google.maps.importLibrary("maps") as google.maps.MapsLibrary;
           const { DrawingManager } = await google.maps.importLibrary("drawing") as google.maps.DrawingLibrary;
-          // const { AdvancedMarkerElement } = await google.maps.importLibrary("marker") as google.maps.MarkerLibrary; 
           
           if(mapDOMElement.current) {
             const googleMapObject = new Map(
@@ -185,9 +264,9 @@ function App() {
       
   }, []);
 
-
   useEffect(() => {
     if (mapRef.current) {
+      console.log("render elements");
       renderGeometryElementsInMap(data, mapRef.current);
     }
   }, [data]);
@@ -207,38 +286,28 @@ function App() {
   }, [isLoadedMapDrawingManager, createDrawingManagerOverlayCompleteListener]);
 
   useEffect(() => {
-    // geometry element function
     const onLoadGeometryElementInMap = (
-      geometryElement: GeometryElementType
+      geometryElement: GeometryElementType,
     ) => {
       if(!isLoadedGeometryElement) return;
-      
+
       google.maps.event.addListener(geometryElement, 'click', function() {
-        console.log("you clicked me", geometryElement);
-        // TODO: resetSelection
-        resetSelection(data);
-
-        if (data) {
-          setSelectedDataItemId(findSelectedDataItemId(data, geometryElement));
-
-          geometryElmentSetOptions(geometryElement, 'select');
-        }
+        mapGeometryElement.current = geometryElement;
+        setIsClickedGeometryElement(true);
       });
 
       setIsLoadedGeometryElement(false);
-      mapGeometryElement.current = null;
     }
 
     if (mapGeometryElement.current) {
       onLoadGeometryElementInMap(mapGeometryElement.current);
     }
-  }, [isLoadedGeometryElement, data]);
-
-
+  }, [isLoadedGeometryElement]);
 
   return (
     <>
-      <button onClick={() => console.log("Data", data)}>show data state</button>
+      <button onClick={() => console.log("Data", selectedDataItemId)}>show data state</button>
+      <button onClick={() => clearSelection(data)}>Clear selection</button>
       <ToolsAOIControl
         ref={toolsAOIMenuElement}>
          <ToolOnOffButton
@@ -253,6 +322,8 @@ function App() {
             handleAddMarker={handleAddMarker}
             handleAddPolygon={handleAddPolygon}
             handleExploreMap={handleExploreMap}
+            handleDeleteSelectedItem={handleDeleteSelectedItem}
+            handleSaveAOI = {handleSaveAOI}
           />
       </ToolsAOIControl>
       <section id="map" ref={mapDOMElement}>

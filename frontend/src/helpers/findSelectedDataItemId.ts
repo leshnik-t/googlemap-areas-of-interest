@@ -5,7 +5,7 @@ export const findSelectedDataItemId = (
     geometryElement: GeometryElementType
   ) => {
 
-    const selectedItem = data.find((dataItem) => dataItem.instance === geometryElement);
+    const selectedItem = data.find((dataItem) => dataItem.instance == geometryElement);
 
-    return (selectedItem ? selectedItem.id : null);
+    return selectedItem ? selectedItem.id : null;
 }
