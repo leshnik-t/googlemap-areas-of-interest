@@ -1,16 +1,20 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../app/store';
+import { nanoid } from 'nanoid';
 
-export type SingleAOI = {
+export type SingleAOIType = {
     id: string, 
-    coordinates: google.maps.LatLng | google.maps.LatLngLiteral[],
+    coordinates: google.maps.LatLngLiteral | google.maps.LatLngLiteral[],
     type: 'polygon' | 'marker';
 }
 
+export type MultipleAOIType = SingleAOIType[];
+
 export type AOIStateType = {
-    id: string,
-    name: string,
-    aoiData: SingleAOI[]
+    id?: string,
+    name?: string,
+    aoiData: MultipleAOIType
+
 }
 
 const initialState: AOIStateType[] = [];
@@ -21,10 +25,14 @@ const loadedAOISlice = createSlice({
     reducers: {
         addAOIItem: (
             state, 
-            action: PayloadAction<AOIStateType>
+            action: PayloadAction<MultipleAOIType>
         ) => {
-            state.concat(action.payload);
-            console.log("Add item, state is", state);
+            const newAOI = {
+                id: nanoid(),
+                name: 'first aoi',
+                aoiData: action.payload,
+            }
+            state.push(newAOI);
         },
         // addAOIItem: (state, action: PayloadAction<AOIStateType>) => {
 

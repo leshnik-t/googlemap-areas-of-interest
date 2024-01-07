@@ -33,7 +33,14 @@ const processPolygon = (
 const processMarker = (
     overlay: google.maps.Marker
 ) => {
-    const coordinates = overlay.getPosition();
+    const position = overlay.getPosition();
+
+    if (!position) return null;
+
+    const coordinates = {
+        lat: position.lat(),
+        lng: position.lng(),
+    };
 
     if (!coordinates) return null;
 

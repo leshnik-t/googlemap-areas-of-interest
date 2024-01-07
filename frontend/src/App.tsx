@@ -1,10 +1,19 @@
 import './App.scss';
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from './app/hooks';
+import { 
+  SingleAOIType,
+  MultipleAOIType,
+  selectLoadedAOI, 
+  addAOIItem 
+}  from './features/loadedAOISlice';
 
 import { nanoid } from 'nanoid';
 
-import { DataType, GeometryElementType } from './dataTypes/dataTypes';
+import { 
+          DataType, 
+          GeometryElementType,
+} from './dataTypes/dataTypes';
 import { 
   svgMarker, 
   DRAW_MODE_COLOR,
@@ -38,8 +47,8 @@ function App() {
   const [isClickedGeometryElement, setIsClickedGeometryElement] = useState<boolean>(false);
   const mapGeometryElement = useRef<GeometryElementType | null>(null);
 
-  // const loadedAOI = useAppSelector(selectLoadedAOI);
-  // const dispatch = useAppDispatch();
+  const loadedAOI = useAppSelector(selectLoadedAOI);
+  const dispatch = useAppDispatch();
 
   const clearSelection = useCallback(
     (
@@ -184,10 +193,11 @@ function App() {
         id: dataItem.id, 
         coordinates: dataItem.coordinates,
         type: currentInstanceType
-      })
+      } as  SingleAOIType)
     });
+    console.log("currentAOI", currentAOI);
     // ask for a name from popup
-    // dispatch(addAOI);
+    dispatch(addAOIItem(currentAOI));
     
     // load new dispatched element in data
     // on load change color of the saved Geometry elements to white
@@ -306,7 +316,7 @@ function App() {
 
   return (
     <>
-      <button onClick={() => console.log("Data", selectedDataItemId)}>show data state</button>
+      <button onClick={() => console.log("store state", loadedAOI)}>show store state</button>
       <button onClick={() => clearSelection(data)}>Clear selection</button>
       <ToolsAOIControl
         ref={toolsAOIMenuElement}>
