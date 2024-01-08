@@ -1,0 +1,56 @@
+.newaoipopup.show {
+    display: flex;
+}
+.newaoipopup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10000;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    outline: 0;
+    background-color: rgba(0, 0, 0, 0.45);
+    display: none;
+    justify-content: center;
+    align-items: center;
+
+    .newaoipopup-dialog {
+        
+        width: 100%;
+        max-width: 400px;
+        display: flex;
+        flex-direction: column;
+        background-color: black;
+        padding: 1.45rem;
+
+
+        .newaoipopup-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+
+            div {
+                flex: 1;
+                padding: 1rem;
+            }
+
+            .newaoipopup-header{
+                .newaoipopup-title {
+                    font-size: 1.45rem;
+                }
+            }
+            .newaoipopup-body{
+                h5 {
+                    font-size: 2rem;
+                }
+            }
+            .newaoipopup-footer{
+                
+            }
+        }
+
+        
+    }
+}

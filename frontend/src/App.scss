@@ -71,14 +71,9 @@ aside{
 
 //////////////////////////////
 .App {
-  display: flex;
-  flex-direction: column;
-  // min-width: 100%;
-  // min-height: 100dvh;
-}
-.App {
   height: 100vh;
   width: 100vw;
+  display: flex;
 }
 
 .map-container {
@@ -88,6 +83,10 @@ aside{
 .App > main {
   flex: 1 ;
   display: flex;
+}
+
+main > * {
+  flex: 1;
 }
 
 .tools-button {

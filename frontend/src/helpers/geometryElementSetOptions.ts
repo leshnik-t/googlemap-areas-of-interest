@@ -2,12 +2,12 @@ import {
     svgMarker, 
     EXPLORE_MODE_COLOR,
     DRAW_MODE_COLOR,
-    SELECT_MODE_COLOR
-
+    SELECT_MODE_COLOR,
 } from './constants';
-import { GeometryElementType } from '../dataTypes/dataTypes';
-
-type ModeType = 'explore' | 'draw' | 'select';
+import { 
+  GeometryElementType,
+  ModeType
+} from '../dataTypes/dataTypes';
 
 export const geometryElementSetOptions = (
     geometryElement: GeometryElementType,

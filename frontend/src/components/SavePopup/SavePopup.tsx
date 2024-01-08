@@ -1,51 +1,55 @@
 import './save-popup.scss';
-import React from 'react';
 
 type SavePopupProps = {
     isSavePopupShown: boolean,
-    nameValue: string,
+    nameAOI: string,
+    errorNameAOI: string | null,
     handleChangeNameValue: (event: React.ChangeEvent<HTMLInputElement>) => void,
-    handleCancel: () => void,
-    handleSave: () => void
+    handleCancelSaveAOI: () => void,
+    handleSaveAOI: () => void
 }
 
 const SavePopup = ({
     isSavePopupShown,
-    nameValue,
+    nameAOI,
+    errorNameAOI,
     handleChangeNameValue,
-    handleCancel,
-    handleSave,
+    handleCancelSaveAOI,
+    handleSaveAOI,
 }: SavePopupProps) => {
-    const isSavePopupShownClass = isSavePopupShown ? 'savepopup show' : 'savepopup';
+    const isSavePopupShownClassName = isSavePopupShown ? 'savepopup show' : 'savepopup';
     return (
         <>
-        <div className={isSavePopupShownClass}>
+        <div className={isSavePopupShownClassName}>
             <div className="savepopup-dialog">
                 <div className="savepopup-content">
                     <div className="savepopup-header">
                         <h5 className="savepopup-title">Save Area of Interest</h5>
                     </div>
                     <div className="savepopup-body">
-                        <input
-                            type="text" 
-                            placeholder="enter name" 
-                            area-label="Enter new AOI name" 
-                            value={nameValue}
-                            onChange={handleChangeNameValue}
-                        />
+                            <input
+                                type="text" 
+                                placeholder="enter name" 
+                                area-label="Enter new AOI name" 
+                                value={nameAOI}
+                                onChange={handleChangeNameValue}
+                            />
+                            {errorNameAOI && 
+                                <p>{errorNameAOI}</p>
+                            }
                     </div>
                     <div className="savepopup-footer">
                         <button 
                             type="button" 
                             className="btn btn-secondary" 
-                            onClick={handleCancel}
+                            onClick={handleCancelSaveAOI}
                         >
                             Cancel
                         </button>
                         <button 
                             type="button" 
                             className="btn btn-primary"
-                            onClick={handleSave}
+                            onClick={handleSaveAOI}
                         >
                             Save changes
                         </button>

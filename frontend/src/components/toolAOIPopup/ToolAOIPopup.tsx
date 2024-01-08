@@ -11,7 +11,8 @@ type ToolAOIPopupProps = {
     handleAddPolygon: () => void,
     handleExploreMap: () => void,
     handleDeleteSelectedItem: () => void,
-    handleSaveAOI: () => void
+    handleSaveAOI: () => void,
+    handleClickToolAOI: () => void
 }
 
 const ToolAOIPopup = ({ 
@@ -20,14 +21,15 @@ const ToolAOIPopup = ({
     handleAddPolygon,
     handleExploreMap,
     handleDeleteSelectedItem,
-    handleSaveAOI
+    handleSaveAOI,
+    handleClickToolAOI
 
 } : ToolAOIPopupProps) => {
     const divCSSClassName = isActive ? 'active tools-popup' : 'tools-popup'
     return (
         <div className={divCSSClassName}>
           <h2>Area of Interest</h2>
-          <div>
+          <div onClick={handleClickToolAOI}>
             <button 
               draggable="false" 
               aria-label="Explore Map" 

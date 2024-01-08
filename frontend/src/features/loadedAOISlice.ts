@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { RootState } from '../app/store';
-import { nanoid } from 'nanoid';
 
 export type SingleAOIType = {
     id: string, 
@@ -10,16 +9,27 @@ export type SingleAOIType = {
 
 export type MultipleAOIType = SingleAOIType[];
 
-export type AOIStateType = {
+export type AOIItemType = {
     id: string,
     name: string,
-    aoiData: MultipleAOIType
-
+    aoiData: MultipleAOIType,
+    area: google.maps.LatLngLiteral[]
 }
 
-export type PayloadActionAOIType = Omit<AOIStateType, 'id'>
+export type PayloadAddItemType = {
+    item: AOIItemType,
+    selectedItemId: string
+}
 
-const initialState: AOIStateType[] = [];
+export type AOIStateType = {
+    items: AOIItemType[],
+    selectedItemId: string
+}
+
+const initialState: AOIStateType = {
+    items: [],
+    selectedItemId: ''
+}
 
 const loadedAOISlice = createSlice({
     name: 'loadedAOI',
@@ -27,24 +37,41 @@ const loadedAOISlice = createSlice({
     reducers: {
         addAOIItem: (
             state, 
-            action: PayloadAction<PayloadActionAOIType>
+            action: PayloadAction<PayloadAddItemType>
         ) => {
-            const newAOI = {
-                id: nanoid(),
-                name: action.payload.name,
-                aoiData: action.payload.aoiData,
-            }
-            state.push(newAOI);
+            state.items.push(action.payload.item);
+            state.selectedItemId = action.payload.selectedItemId;
         },
-        // addAOIItem: (state, action: PayloadAction<AOIStateType>) => {
+        deleteAOIItem: (
+            state, 
+            action: PayloadAction<string>
+        ) => {
+            const filteredAOI = state.items.filter((item) => item.id !== action.payload);
 
-        // },
-
+            if (filteredAOI) {
+                return {
+                    items: filteredAOI, 
+                    selectedItemId: state.selectedItemId === action.payload ? '' : state.selectedItemId
+                };
+            }
+        },
+        changeSelectedItemId: (
+            state, 
+            action: PayloadAction<string>
+        ) => {
+            state.selectedItemId = action.payload;
+        }
     },
 });
 
-export const { addAOIItem } = loadedAOISlice.actions;
+export const { 
+    addAOIItem, 
+    deleteAOIItem,
+    changeSelectedItemId
+} = loadedAOISlice.actions;
 
-export const selectLoadedAOI = (state: RootState) => state.loadedAOI;
+export const selectLoadedAOI = (state: RootState) => state.loadedAOI.items;
+
+export const selectSelectedItemId = (state: RootState) => state.loadedAOI.selectedItemId;
 
 export default loadedAOISlice.reducer;

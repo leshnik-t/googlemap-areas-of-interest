@@ -16,12 +16,6 @@ export type DataType = {
     instance: google.maps.Polygon | google.maps.Marker
 }
 
-// export type SingleAOIType = {
-//     id: string,
-//     coordinates: google.maps.LatLng | google.maps.LatLngLiteral[],
-//     type: 'polygon' | 'marker'
-// }
-
-// export type MultipleAOI = SingleAOIType[]
+export type ModeType = 'explore' | 'draw' | 'select';
 
 export type GeometryElementType = google.maps.Polygon | google.maps.Marker;

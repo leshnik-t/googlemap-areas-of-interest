@@ -2,9 +2,10 @@ import './App.scss';
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useAppSelector, useAppDispatch } from './app/hooks';
 import { 
-  SingleAOIType,
   selectLoadedAOI, 
-  addAOIItem 
+  selectSelectedItemId,
+  addAOIItem,
+  changeSelectedItemId
 }  from './features/loadedAOISlice';
 
 import { nanoid } from 'nanoid';
@@ -24,12 +25,16 @@ import { renderGeometryElementsInMap } from './helpers/renderGeometryElementsInM
 import { findSelectedDataItemId } from './helpers/findSelectedDataItemId';
 import { geometryElementSetOptions } from './helpers/geometryElementSetOptions';
 import { deleteGeometryElementFromMap } from './helpers/deleteGeometryElementFromMap';
+import { createGeometryElementInstance } from './helpers/createGeometryElementInstance.ts';
+import { calculateAOIDataAndArea } from './helpers/calculateAOIDataAndArea.ts';
 
 import ToolsAOIControl from './components/toolAOIControl/ToolAOIControl';
 import ToolOnOffButton from './components/toolAOIOnOffButton/ToolAOIOnOffButton';
 import ToolAOIPopup from './components/toolAOIPopup/ToolAOIPopup';
 import { LiaDrawPolygonSolid } from "react-icons/lia";
+import LeftMenu from './components/leftMenu/LeftMenu.tsx';
 import SavePopup from './components/SavePopup/SavePopup.tsx';
+import NewAOIPopup from './components/newAOIPopup/NewAOIPopup.tsx';
 
 function App() {
   const mapDOMElement = useRef<HTMLElement>(null);
@@ -48,56 +53,197 @@ function App() {
   const mapGeometryElement = useRef<GeometryElementType | null>(null);
 
   const loadedAOI = useAppSelector(selectLoadedAOI);
+  const selectedItemId = useAppSelector(selectSelectedItemId);
   const dispatch = useAppDispatch();
 
   /// save popup
   const [isSavePopupShown, setIsSavePopupShown] = useState<boolean>(false);
   const [nameAOI, setNameAOI] = useState<string>('');
+  const [errorNameAOI, setErrorNameAOI] = useState<string | null>(null);
+
+  // new AOI popup
+  const [isNewAOIPopupShown, setIsNewAOIPopupShown] = useState<boolean>(false);
+
+  // New AOI Popup handlers
+  const handleNewAOIPopupCancel = () => {
+    if (!drawingRef.current) return;
+   
+    setIsActiveToolControl(false);
+    setIsNewAOIPopupShown(false); 
+  }
+
+  const handleNewAOIPopupYes = () => {
+    if (data.length === 0) return;
+    clearSelection(data);
+
+    // add event listeners to kept geometry elements
+    data.map((dataItem) => {
+      google.maps.event.addListener(dataItem.instance, 'click', function() {
+        mapGeometryElement.current = dataItem.instance;
+        setIsClickedGeometryElement(true);
+      });
+    });
+
+    dispatch(changeSelectedItemId(''));
+    setIsNewAOIPopupShown(false); 
+  }
+
+  const handleNewAOIPopupNo = () => {
+    // clear everything painted on the map
+    if (data.length === 0) return;
+    data.map((dataItem) => dataItem.instance.setMap(null));
+    setData([]);
+    
+    dispatch(changeSelectedItemId(''));
+    setIsNewAOIPopupShown(false);
+  }
+  //end New AOI Popup handlers
+
+ // Tool AOI Control handlers
+ const handleToolsPopupMode = () => {
+    if (!mapRef.current) return;
+    if (!drawingRef.current) return;
+    if (selectedItemId !== '') {
+      setIsNewAOIPopupShown(true);
+      setIsActiveToolControl(true);
+    } else {
+      setIsActiveToolControl(prev => !prev);
+    }
+    // setIsNewAOIPopupShown(true);
+  }
+  const handleAddPolygon = () => {
+    if (!mapRef.current) return;
+    if (!drawingRef.current) return;
+    console.log("add polygon");
+    drawingRef.current.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+  }
+  const handleAddMarker = () => {
+    if (!mapRef.current) return;
+    if (!drawingRef.current) return;
+    console.log("add marker");
+    drawingRef.current.setDrawingMode(google.maps.drawing.OverlayType.MARKER);
+  }
+  const handleExploreMap = () => {
+    if (!mapRef.current) return;
+    if (!drawingRef.current) return;
+    console.log("click explore");
+    drawingRef.current.setDrawingMode(null);
+  }
+  const handleDeleteSelectedItem = () => {
+    if (!mapRef.current) return;
+    if (!drawingRef.current) return;
+    if (!selectedDataItemId) return;
+    deleteGeometryElementFromMap(selectedDataItemId, data);
+
+    // update data state
+    const newData = data.filter((dataItem) => dataItem.id !== selectedDataItemId);
+    console.log('New Data', newData);
+    setData(newData);
+
+    mapGeometryElement.current = null;
+    setSelectedDataItemId(null);
+  }
+  const handleSaveShowPopup = () => {
+    if (!mapRef.current) return;
+    if (!drawingRef.current) return;
+    if (data.length === 0) return;
+    setIsSavePopupShown(true);
+  };
+  const handleClickToolAOI = () => {
+    // if (data.length === 0 || selectedItemId === '') return;
+
+    // // entering drawing mode
+    // setIsNewAOIPopupShown(true);
+  }
+  // end Tool AOI Control handlers
+
+
+  // loading the selected AOI  
+  useEffect(() => {
+    if (!mapRef.current) return;
+    
+    if (selectedItemId === '' && !isActiveToolContol) {
+      data.map((dataItem) => dataItem.instance.setMap(null));
+      setData([]);
+    }
+    // set new data and map.fitBounds to the data
+    if (selectedItemId !== '') {
+      setIsActiveToolControl(false);
+       // clear everything painted on the map
+      data.map((dataItem) => dataItem.instance.setMap(null));
+      setData([]);
+
+      const itemAOI = loadedAOI.find((item) => item.id === selectedItemId);
+
+      if (itemAOI) {
+        try {
+          const newData:DataType[] = itemAOI.aoiData.map((item) => {
+              const newDataItem = createGeometryElementInstance(item);
+              if (!newDataItem) throw new Error('Wrong data in the database');
+
+              return (newDataItem)
+          });
+          
+          setData(newData);
+
+          const bounds = new google.maps.LatLngBounds();
+          itemAOI.area.map((pointLatLng) => bounds.extend(pointLatLng));
+          mapRef.current.fitBounds(bounds);
+          
+        } catch(e) {
+          console.log(e);
+        }
+      }
+    }
+  }, [selectedItemId, loadedAOI]);
 
   const handleChangeNameValue = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setNameAOI(event.target.value);
+    setErrorNameAOI(null);
   }
 
   const handleSaveAOI = () => {
     // prepare data for AOI dispatch
-    const currentAOI = data.map((dataItem) => {
-      let currentInstanceType;
-      switch(true) {
-        case (dataItem.instance instanceof google.maps.Polygon): {
-          currentInstanceType = 'polygon';
-          break;
-        }
-        case (dataItem.instance instanceof google.maps.Marker): {
-          currentInstanceType = 'marker';
-          break;
-        }
-        default: break;
-      }
-
-      return ({
-        id: dataItem.id, 
-        coordinates: dataItem.coordinates,
-        type: currentInstanceType
-      } as  SingleAOIType)
-    });
-    console.log("currentAOI", currentAOI);
-    // ask for a name from popup
-    dispatch(addAOIItem({
-      name: nameAOI,
-      aoiData: currentAOI
-    }));
+    if (nameAOI === '') {
+      setErrorNameAOI('Please enter AOI name');
+      return;
+    }
     
+    // calculate area of all geometry elements
+    const {item, area} = calculateAOIDataAndArea(data);
+    // const bounds = new google.maps.LatLngBounds();
+
+    const newAOIId = nanoid();
+
+    dispatch(addAOIItem({
+        item: {
+          id: newAOIId,
+          name: nameAOI,
+          aoiData: item,
+          area: area
+        },
+        selectedItemId: newAOIId
+    }));
+
     setIsSavePopupShown(false);
     setNameAOI('');
-    
-    // load new dispatched element in data
-    // on load change color of the saved Geometry elements to white
   }
   const handleCancelSaveAOI = () => {
     setIsSavePopupShown(false);
   }
+ 
+  const handleNavigationClick = (
+    event: React.MouseEvent<HTMLDivElement>
+  ): void => {
+    if (!mapRef.current) return;
+
+    const dataId = event.currentTarget.parentElement?.getAttribute('data-id');
+    if (dataId) {
+        dispatch(changeSelectedItemId(dataId));
+    }
+}
 
   const clearSelection = useCallback(
     (
@@ -136,7 +282,7 @@ function App() {
     setIsClickedGeometryElement(false);
   }, [isClickedGeometryElement, data, clearSelection]);
 
-  // Drawing Manager functions
+  // Drawing Manager functions and geometry element listener
   const createDrawingManagerOverlayCompleteListener = useCallback(
     (
       drawingManagerReference: google.maps.drawing.DrawingManager
@@ -174,56 +320,7 @@ function App() {
     []
   );
 
-  // Tool AOI Control handlers
-  const handleToolsPopupMode = () => {
-    if (!mapRef.current) return;
-    if (!drawingRef.current) return;
-    setIsActiveToolControl(prev => !prev);
-  }
-  const handleAddPolygon = () => {
-    if (!mapRef.current) return;
-    if (!drawingRef.current) return;
-    console.log("add polygon");
-    drawingRef.current.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
-  }
-  const handleAddMarker = () => {
-    if (!mapRef.current) return;
-    if (!drawingRef.current) return;
-    console.log("add marker");
-    drawingRef.current.setDrawingMode(google.maps.drawing.OverlayType.MARKER);
-  }
-  const handleExploreMap = () => {
-    if (!mapRef.current) return;
-    if (!drawingRef.current) return;
-    console.log("click explore");
-    drawingRef.current.setDrawingMode(null);
-  }
-  const handleDeleteSelectedItem = () => {
-    if (!mapRef.current) return;
-    if (!drawingRef.current) return;
-    if (!selectedDataItemId) return;
-    console.log("click delete");
-    // id
-    console.log("item id", selectedDataItemId);
-
-    deleteGeometryElementFromMap(selectedDataItemId, data);
-
-    // update data state
-
-    const newData = data.filter((dataItem) => dataItem.id !== selectedDataItemId);
-    console.log('New Data', newData);
-    setData(newData);
-
-    mapGeometryElement.current = null;
-    setSelectedDataItemId(null);
-  }
-  const handleSaveShowPopup = () => {
-    if (!mapRef.current) return;
-    if (!drawingRef.current) return;
-    if (data.length === 0) return;
-    setIsSavePopupShown(true);
-  };
-  // end Tool AOI Control handlers
+ 
 
   useEffect(() => {
       const initMap = async (): Promise<void> => {
@@ -297,6 +394,7 @@ function App() {
   useEffect(() => {
     if (mapRef.current) {
       console.log("render elements");
+      // clean everything form the map
       renderGeometryElementsInMap(data, mapRef.current);
     }
   }, [data]);
@@ -335,38 +433,51 @@ function App() {
   }, [isLoadedGeometryElement]);
 
   return (
-    <>
+    <div className="App">
+      <header></header>
+      <main>
+        <LeftMenu 
+          handleNavigationClick={handleNavigationClick}
+        />
+        <ToolsAOIControl
+          ref={toolsAOIMenuElement}>
+          <ToolOnOffButton
+              isActive={isActiveToolContol}
+              areaLabel="Switch On Of AOI tool buttons"
+              handleToolsPopupMode={handleToolsPopupMode}
+            >
+              <LiaDrawPolygonSolid />
+            </ToolOnOffButton>
+            <ToolAOIPopup 
+              isActive={isActiveToolContol} 
+              handleAddMarker={handleAddMarker}
+              handleAddPolygon={handleAddPolygon}
+              handleExploreMap={handleExploreMap}
+              handleDeleteSelectedItem={handleDeleteSelectedItem}
+              handleSaveAOI = {handleSaveShowPopup}
+              handleClickToolAOI={handleClickToolAOI}
+            />
+        </ToolsAOIControl>
+        <section className="map-container" ref={mapDOMElement}>
+            
+        </section>
+      </main>
       <SavePopup 
         isSavePopupShown={isSavePopupShown}
-        nameValue={nameAOI}
+        nameAOI={nameAOI}
+        errorNameAOI={errorNameAOI}
         handleChangeNameValue={handleChangeNameValue}
-        handleCancel={handleCancelSaveAOI}
-        handleSave={handleSaveAOI}
+        handleCancelSaveAOI={handleCancelSaveAOI}
+        handleSaveAOI={handleSaveAOI}
       />
-      <button onClick={() => console.log("store state", loadedAOI)}>show store state</button>
-      <button onClick={() => clearSelection(data)}>Clear selection</button>
-      <ToolsAOIControl
-        ref={toolsAOIMenuElement}>
-         <ToolOnOffButton
-            isActive={isActiveToolContol}
-            areaLabel="Switch On Of AOI tool buttons"
-            handleToolsPopupMode={handleToolsPopupMode}
-          >
-            <LiaDrawPolygonSolid />
-          </ToolOnOffButton>
-          <ToolAOIPopup 
-            isActive={isActiveToolContol} 
-            handleAddMarker={handleAddMarker}
-            handleAddPolygon={handleAddPolygon}
-            handleExploreMap={handleExploreMap}
-            handleDeleteSelectedItem={handleDeleteSelectedItem}
-            handleSaveAOI = {handleSaveShowPopup}
-          />
-      </ToolsAOIControl>
-      <section id="map" ref={mapDOMElement}>
-          
-      </section>
-    </>
+      <NewAOIPopup 
+         isNewAOIPopupShown={isNewAOIPopupShown}
+         handleNewAOIPopupCancel={handleNewAOIPopupCancel}
+         handleNewAOIPopupYes={handleNewAOIPopupYes}
+         handleNewAOIPopupNo={handleNewAOIPopupNo}
+      />
+      
+    </div>
   );
 }
 
