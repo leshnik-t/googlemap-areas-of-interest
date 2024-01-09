@@ -1,16 +1,17 @@
 # Google Map Area of Interest Frontend Application
-
-## React + Redux + TypeScript + Vite + SASS
+## Backend - not done 
+## Frontend - Done in folder frontend
+React + Redux + TypeScript + Vite + SASS
 
 ### Implemented 
-Drawing Tools:
+#### Drawing Tools:
 * Disable/Enable Drawing Mode 
 * Draw Polygon
 * Add Marker
 * Delete Selected Element on Map
 * Save Area of Multiple Elements
 
-### Left Menu Navigation with Saved Areas AOIs
+#### Left Menu Navigation with Saved Areas AOIs
 * List of Areas
 * Delete Button
 
@@ -55,5 +56,3 @@ key: '%VITE_GOOGLE_API_KEY%',
 ```
 $ npm run dev
 ```
-
-
