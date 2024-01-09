@@ -23,7 +23,6 @@ const createPolygon = (
         } as DataType)
     } catch(e){
         console.log(e);
-        return null;
     }  
 }
 
@@ -48,14 +47,12 @@ const createMarker = (
         } as DataType);
     } catch(e) {
         console.log(e);
-        return null;
     }
 }
 
 export const createGeometryElementInstance = (
     item: SingleAOIType,
 ) => {
-    console.log(item);
     const {id, coordinates, type} = item;
 
     switch(true) {

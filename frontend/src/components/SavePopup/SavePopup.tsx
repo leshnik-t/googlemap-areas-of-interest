@@ -35,7 +35,7 @@ const SavePopup = ({
                                 onChange={handleChangeNameValue}
                             />
                             {errorNameAOI && 
-                                <p>{errorNameAOI}</p>
+                                <p className="error-message">{errorNameAOI}</p>
                             }
                     </div>
                     <div className="savepopup-footer">

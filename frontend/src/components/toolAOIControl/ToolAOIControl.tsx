@@ -9,7 +9,7 @@ type ToolAOIControlProps = {
 export type Ref = HTMLDivElement;
 
 const ToolAOIControl = forwardRef<Ref, ToolAOIControlProps>((props, ref) => {
-  const divCSSClassName = props.className ? `tools-menu ${props.className}` : 'tools-menu'
+  const divCSSClassName = props.className ? `toolAOIcontrol ${props.className}` : 'toolAOIcontrol'
 
   return (
     <div 

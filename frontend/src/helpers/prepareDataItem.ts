@@ -7,53 +7,61 @@ const POLYGON_NODES_MIN_QUANTITY = 3;
 const processPolygon = (
     overlay: google.maps.Polygon
 ) => {
-    const coordinateFuncs: google.maps.LatLng[] = overlay
-        .getPath()
-        .getArray();
+    try {
+        const coordinateFuncs: google.maps.LatLng[] = overlay
+            .getPath()
+            .getArray();
 
-    const coordinates =
-        coordinateFuncsToCoordinates(coordinateFuncs);
+        const coordinates =
+            coordinateFuncsToCoordinates(coordinateFuncs);
 
-    if (coordinates.length < POLYGON_NODES_MIN_QUANTITY) {
-        return null;
+        if (coordinates.length < POLYGON_NODES_MIN_QUANTITY) {
+            return null;
+        }
+
+        const polygonItem = new google.maps.Polygon({
+            paths: coordinates,
+            strokeColor: DRAW_MODE_COLOR,
+            strokeOpacity: 0.8,
+            strokeWeight: 2,
+            fillColor: DRAW_MODE_COLOR,
+            fillOpacity: 0.35,
+        });
+
+        return { geometryElement:polygonItem, coordinates };
+    } catch(e) {
+        console.log(e);
     }
-
-    const polygonItem = new google.maps.Polygon({
-        paths: coordinates,
-        strokeColor: DRAW_MODE_COLOR,
-        strokeOpacity: 0.8,
-        strokeWeight: 2,
-        fillColor: DRAW_MODE_COLOR,
-        fillOpacity: 0.35,
-    });
-
-    return { geometryElement:polygonItem, coordinates };
 }
 
 const processMarker = (
     overlay: google.maps.Marker
 ) => {
-    const position = overlay.getPosition();
+    try {
+        const position = overlay.getPosition();
 
-    if (!position) return null;
+        if (!position) return null;
 
-    const coordinates = {
-        lat: position.lat(),
-        lng: position.lng(),
-    };
+        const coordinates = {
+            lat: position.lat(),
+            lng: position.lng(),
+        };
 
-    if (!coordinates) return null;
+        if (!coordinates) return null;
 
-    const markerItem = new google.maps.Marker({
-        position: coordinates,
-        icon : {
-            ...svgMarker,
-            fillColor: DRAW_MODE_COLOR,
-            strokeColor: DRAW_MODE_COLOR
-        }
-    });
+        const markerItem = new google.maps.Marker({
+            position: coordinates,
+            icon : {
+                ...svgMarker,
+                fillColor: DRAW_MODE_COLOR,
+                strokeColor: DRAW_MODE_COLOR
+            }
+        });
 
-    return { geometryElement: markerItem, coordinates};
+        return { geometryElement: markerItem, coordinates};
+    } catch(e) {
+        console.log(e);
+    }
 }
 
 export const prepareDataItem = (

@@ -1,23 +1,114 @@
+@use '../../base';
+.left-menu.show {
+    display: block;
+}
 .left-menu {
-    flex: 1;
-    min-width: 200px;
-    max-width: 300px;
+    display: none;
+    width: 100%;
+    // display: block;
+    padding: 1rem;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 10001;
+    overflow-x: hidden;
+    overflow-y: auto;
+    
+    background-color: base.$leftmenu-background;
+
+    h2 {
+        display: flex;
+        justify-content:space-between;
+        align-items: center;
+        width: 100%;
+        font-size: 1.25rem;
+        padding: 0 0 1rem 0;
+        border-bottom: 1px solid base.$left-menu-border-color;
+
+        & button {
+            display: flex;
+        }
+    }
+    
+    & > p {
+        font-size: 0.75rem;
+        padding: 1rem 0;
+        text-transform: uppercase;
+        margin: 0;
+    }
 
     nav {
+        flex: 1;
+        display: flex;
+        width: 100%;
+
         ul {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             list-style: none;
-            padding: 1rem;
+            padding: 0;
+            margin-bottom: 0;
 
             li {
+                position: relative;
+                display: flex;
                 padding: 1rem;
 
+                &:hover {
+                    background-color: rgba(255, 255, 255, 0.25);
+                }
+
                 & > div {
+                    width: 100%;
                     cursor: pointer;
+                    display: flex;
+                    gap: 0.5rem;
+                    justify-content: flex-start;
+                    align-items: center;
                 }
 
                 &.selected {
-                    background-color: red;
+                    background-color: rgba(11, 94, 215, 0.55);
                 }
+
+                & button.delete-btn {
+                    color: base.$nav-btn-delete-color;
+                    background-color: base.$nav-btn-delete-background;
+                }
+                .deleteAOIWarning {
+                    position: absolute;
+                    color: black;
+                    background-color: white;
+                    font-size: 0.75rem;
+                    padding: 1rem;
+                    left: 0;
+                    right: 0;
+                    top: 0;
+                    bottom: 0;
+
+                    & button {
+                        font-size: 0.75rem;
+                    }
+                }
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 768px) {
+    .left-menu {
+        display: flex;
+        max-width: 300px;
+        flex: 1;
+        flex-direction: column;
+        align-items: flex-start;
+
+        h2 {
+            & button {
+                display: none;
             }
         }
     }

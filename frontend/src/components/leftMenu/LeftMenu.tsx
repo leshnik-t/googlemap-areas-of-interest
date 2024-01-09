@@ -1,70 +1,51 @@
 import './left-menu.scss';
-import { useAppSelector, useAppDispatch } from '../../app/hooks';
+import { useAppSelector } from '../../app/hooks';
 import { 
   selectLoadedAOI,
-  selectSelectedItemId,
-  deleteAOIItem,
 }  from '../../features/loadedAOISlice';
+import { MdOutlineClose } from "react-icons/md";
+
+import Item from './Item';
 
 type LeftMenuProps = {
+    isMobileMenuShown: boolean,
     handleNavigationClick: (event: React.MouseEvent<HTMLDivElement>) => void,
+    handleCloseMobileMenu: () => void
 }
 
 const LeftMenu = ({
+    isMobileMenuShown,
     handleNavigationClick,
+    handleCloseMobileMenu
 }: LeftMenuProps) => {
     const loadedAOI = useAppSelector(selectLoadedAOI);
-    const selectedItemId = useAppSelector(selectSelectedItemId);
-    const dispatch = useAppDispatch();
-   
+    const numberOfAreas = loadedAOI.length;
+    
     const navigationList = loadedAOI.map((item) => {
-        const handleDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
-            const dataId = event.currentTarget.parentElement?.getAttribute('data-id');
-            if (dataId) {
-                dispatch(deleteAOIItem(dataId));
-                // if data 
-                // clear map , clear data
-                
-            }
-        }
-        if (item.id === selectedItemId) {
-            return(
-                <li key={item.id} data-id={item.id} className="item selected">
-                    <div onClick={handleNavigationClick} >
-                        <i>icon</i>
-                        <span>{item.name}</span>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={handleDelete}
-                    >
-                        Delete
-                    </button>
-                </li>
-            )
-        } 
-        return(
-            <li key={item.id} data-id={item.id} className="item">
-                <div onClick={handleNavigationClick} >
-                    <i>icon</i>
-                    <span>{item.name}</span>
-                </div>
-                <button
-                    type="button"
-                    onClick={handleDelete}
-                >
-                    Delete
-                </button>
-            </li>
+        return (
+            <Item key={item.id} 
+                item={item}
+                handleNavigationClick={handleNavigationClick}
+            />
         )
     });
 
-   
+    const isMobileMenuShownClassName = isMobileMenuShown ? 'show' : '';
 
     return (
-        <div className="left-menu">
-            <h2>Area Of Interes</h2>
-            <nav>
+        <div className={`left-menu ${isMobileMenuShownClassName}`}>
+            <h2 id="myAreas">
+                My Areas Of Interest 
+                <button 
+                    type="button"
+                    className="btn-close-mobile-menu"
+                    onClick={handleCloseMobileMenu}
+                >
+                    <MdOutlineClose />
+                </button>
+            </h2>
+            <p>Counted ( {numberOfAreas} )</p>
+            <nav area-llabeledby="myAreas">
                 <ul>
                     {navigationList}
                 </ul>

@@ -1,10 +1,10 @@
-.newaoipopup.show {
+.warningpopup.show {
     display: flex;
 }
-.newaoipopup {
+.warningpopup {
     position: fixed;
     top: 0;
-    left: 0;
+    left: 0; 
     z-index: 10005;
     width: 100%;
     height: 100%;
@@ -16,7 +16,7 @@
     justify-content: center;
     align-items: center;
 
-    .newaoipopup-dialog {
+    .warningpopup-dialog {
         
         width: 100%;
         max-width: 400px;
@@ -26,7 +26,7 @@
         padding: 1.45rem;
 
 
-        .newaoipopup-content {
+        .warningpopup-content {
             flex: 1;
             display: flex;
             flex-direction: column;
@@ -36,17 +36,17 @@
                 padding: 1rem;
             }
 
-            .newaoipopup-header{
-                .newaoipopup-title {
+            .warningpopup-header{
+                .warningpopup-title {
                     font-size: 1.45rem;
                 }
             }
-            .newaoipopup-body{
+            .warningpopup-body{
                 h5 {
                     font-size: 2rem;
                 }
             }
-            .newaoipopup-footer{
+            .warningpopup-footer{
                 display: flex;
                 gap: 0.75rem;
                 justify-content: flex-start;
