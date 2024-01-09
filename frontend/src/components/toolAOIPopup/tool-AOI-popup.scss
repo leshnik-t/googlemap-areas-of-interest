@@ -1,0 +1,103 @@
+@use '../../base';
+
+.toolsAOIPopup.active {
+    display: block;
+    position: absolute;
+    right: 0px;
+    bottom: 50px;
+    margin-bottom: 7px;
+    z-index: 1000;
+    background-color: base.$tool-background-color;
+}
+.toolsAOIPopup {
+    display: none;
+
+    h2 {
+        font-size: 0.7rem;
+        text-align: center;
+        padding: 0.5rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        border-bottom: 1px solid base.$tool-border-color;
+    }
+
+    & > div {
+        display: flex;
+        flex-direction: column;
+
+        button {
+            font-size: 0.8rem;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            color: base.$tool-btn-color;
+            background-color: base.$tool-btn-background;
+    
+            &:hover, &:active{
+                color: base.$btn-color;
+                background-color: base.$btn-background;
+            }
+
+        }
+
+        .separator {
+            border-left: 5px solid  base.$tool-border-color;
+        }
+
+        .drawing-buttons-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 1rem;
+            gap: 0.5rem;
+
+            button {
+                font-size: 1rem;
+                &.delete-btn {
+                    color: base.$tool-btn-delete-color;
+                    background-color: base.$tool-btn-delete-background;
+
+                    &:disabled {
+                        color: base.$btn-color-disabled;
+                        background-color: base.$btn-background-disabled;
+                        cursor: not-allowed;
+                    }
+                }
+
+                &.active {
+                    color: base.$tool-btn-active-color;
+                    background-color: base.$tool-btn-active-background;
+                }
+
+                &:disabled {
+                    color: base.$btn-color-disabled;
+                    background-color: base.$btn-background-disabled;
+                    cursor: not-allowed;
+                }
+            }
+        }
+        .save-button-container {
+            background-color: base.$tool-save-button-container-background;
+            padding: 1rem;
+            border-top: 1px solid base.$tool-border-color;
+            
+            button {
+                font-size: 1.4rem;
+                color: base.$tool-btn-save-color;
+                background-color: base.$tool-btn-save-background;
+
+                &:disabled {
+                    color: base.$btn-color-disabled;
+                    background-color: base.$btn-background-disabled;
+                    cursor: not-allowed;
+                }
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 768px) {
+    // .toolsAOIPopup > div {
+    //     flex-direction: row;
+    // }
+}
